@@ -3168,7 +3168,7 @@ window.DEFAULT_QA = [
     H+='<section class="solver-section full"><h3>Strength design — steps BU1–BU10 (Handbook Ex 5.6, Aaaaaaa.pdf p.49–54)</h3>';
     H+=step('BU1','Imposed loads and durations',eq('shorter-term imposed Q = '+f(Q,1)+' kN/m ('+durQ.lab+')<br>longer-term imposed ψ<sub>ℓ</sub>Q = 0.4 × '+f(Q,1)+' = '+f(psiL*Q,2)+' kN/m (50+ years)')+why('The imposed load given is a shorter-term load (a crowd on top of a smaller 50+ year furniture/storage load). With no other information the 50+ year imposed part is ψℓQ (AS/NZS 1170.0 Table 4.1, Handbook Fig 2.7).'));
     H+=step('BU2','Strength combinations, critical case (D<sub>L</sub> = M*/k₁), shear and bearing actions',
-      '<table class="matrix"><thead><tr><th>Load case</th><th>w* (kN/m)</th><th>M* = w*L²/8</th><th>k₁</th><th>D<sub>L</sub></th><th>V* (clear span)</th><th>N* (full length)</th></tr></thead><tbody>'+cases.map(c=>'<tr class="'+(c===crit?'pro-pass':'')+'"><td>'+c.expr+' — '+c.name+(c===crit?' <b>← critical</b>':'')+'</td><td class="num">'+f(c.w,2)+'</td><td class="num">'+f(c.M,1)+' kN·m</td><td class="num">'+f(c.k1,2)+'</td><td class="num">'+f(c.DL,1)+'</td><td class="num">'+f(c.V,1)+' kN</td><td class="num">'+f(c.N,1)+' kN</td></tr>').join('')+'</tbody></table>'+why('Shear is taken from the load over the clear span '+f(Lc,0)+' mm (conservative — the load within 1.5d of the support is not discounted); bearing from the load over the full member length '+f(Lfull,0)+' mm. Moment uses the design span '+f(L,0)+' mm.'));
+      '<table class="matrix"><thead><tr><th>Load case</th><th>w* (kN/m)</th><th>M* = w*L²/8</th><th>k₁</th><th>D<sub>L</sub> = M*/k₁</th><th>V* = w*L<sub>clear</sub>/2</th><th>N* = w*L<sub>full</sub>/2</th></tr></thead><tbody>'+cases.map(c=>'<tr class="'+(c===crit?'pro-pass':'')+'"><td>'+c.expr+' — '+c.name+(c===crit?' <b>← critical</b>':'')+'</td><td class="num">'+(c.expr==='1.2G + 1.5Q'?'1.2×'+f(G,1)+' + 1.5×'+f(Q,1):'1.2×'+f(G,1)+' + 1.5×'+f(psiL*Q,2))+' = <b>'+f(c.w,2)+'</b></td><td class="num">'+f(c.w,2)+'×'+f(L/1000,2)+'²/8 = <b>'+f(c.M,1)+'</b> kN·m</td><td class="num">'+f(c.k1,2)+'</td><td class="num">'+f(c.M,1)+'/'+f(c.k1,2)+' = <b>'+f(c.DL,1)+'</b></td><td class="num">'+f(c.w,2)+'×'+f(Lc/1000,2)+'/2 = <b>'+f(c.V,1)+'</b> kN</td><td class="num">'+f(c.w,2)+'×'+f(Lfull/1000,2)+'/2 = <b>'+f(c.N,1)+'</b> kN</td></tr>').join('')+'</tbody></table>'+why('Shear is taken from the load over the clear span '+f(Lc,0)+' mm (conservative — the load within 1.5d of the support is not discounted); bearing from the load over the full member length '+f(Lfull,0)+' mm. Moment uses the design span '+f(L,0)+' mm.'));
     H+=step('BU3','Material strengths',eq(gname+': f′<sub>b</sub> = <b>'+f(fb,0)+' MPa</b> (independent of size), f′<sub>s</sub> = <b>'+f(fs,1)+' MPa</b> (Table 7.1); radiata pine glulam bearing group SD6: f′<sub>p</sub> = <b>'+f(fp,0)+' MPa</b> (Table H2.2/H2.4)'));
     H+=step('BU4','Capacity factor φ',eq('φ = <b>'+f(phi,2)+'</b> (glulam to AS/NZS 1328, Category '+cat.c+', Table 2.1)')+why(cat.why));
     H+=step('BU5','Modification factors and minimum Z',eq('k₁ = <b>'+f(crit.k1,2)+'</b> (critical case, Table 2.3) · k₄ = <b>'+f(k4,1)+'</b> (seasoned glulam used indoors, Cl 2.4.2.3) · k₆ = <b>'+f(k6,1)+'</b> ('+(inSouth?'well south of 25°S':'Cl 2.4.3')+') · k₉ = <b>'+f(k9,1)+'</b> (Cl 7.4.3) · k₁₂ = 1.0 assumed for the first guess · ρ<sub>b</sub> = <b>'+f(rhob,2)+'</b> (Table 7.2(A), r = 0.25)<br>Z<sub>min</sub> = M* / (φ k₁ k₄ k₆ k₉ k₁₂ f′<sub>b</sub>) = '+f(crit.M,1)+'×10⁶ / ('+f(phi,2)+'×'+f(crit.k1,2)+'×'+f(k4,1)+'×'+f(k6,1)+'×'+f(k9,1)+'×1.0×'+f(fb,0)+') = <b>'+f(Zmin/1e3,0)+'×10³ mm³</b>')+why('Equation 5.18. r for the critical case = 1.5Q/(1.2G+1.5Q) = '+f(rGov,2)+'; ρ<sub>b</sub> for that case alone would be 0.79, but the conservative r = 0.25 value 0.84 is applied to every combination.'));
@@ -3177,12 +3177,12 @@ window.DEFAULT_QA = [
     const P=pick,s=P.s;
     H+='<div class="check-hero"><b>PASS</b> — select <b>'+s.dn+' × '+s.bn+' mm '+gname+'</b> (design dimensions d = '+s.d+' mm, b = '+s.b+' mm, Z = '+f(s.Z/1e3,0)+'×10³ mm³).</div>';
     H+=step('BU6','Actual f′b and k₁₂',eq('f′<sub>b</sub> = '+f(fb,0)+' MPa for all glulam sizes (no size modification)'+(P.S1!=null?'<br>S₁ = 1.25 (d/b)(L<sub>ay</sub>/d)<sup>0.5</sup> = 1.25 × ('+s.d+'/'+s.b+') × ('+f(Lay,0)+'/'+s.d+')<sup>0.5</sup> = <b>'+f(P.S1,2)+'</b> (compression edge restrained by the joists, Cl 3.2.3.2(a))<br>ρ<sub>b</sub>S₁ = '+f(rhob,2)+' × '+f(P.S1,2)+' = '+f(rhob*P.S1,2)+' '+(rhob*P.S1<=10?'≤ 10 ⇒ <b>k₁₂ = 1.0</b> (Cl 3.2.4(a))':'⇒ k₁₂ = '+f(P.k12,3)+' (Cl 3.2.4)'):'<br>k₁₂ = '+f(P.k12,2)))+why('The joists fastened to the top (compression) edge at '+(Lay?f(Lay,0)+' mm':'the stated')+' centres provide continuous-enough lateral restraint to that edge.'));
-    H+=step('BU7','Bending capacity M<sub>d</sub> = φ k₁ k₄ k₆ k₉ k₁₂ f′<sub>b</sub> Z for every load case','<table class="matrix"><thead><tr><th>Load case</th><th>k₁</th><th>M<sub>d</sub> (kN·m)</th><th>M* (kN·m)</th><th>Load ratio</th><th>Result</th></tr></thead><tbody>'+P.rows.map(x=>'<tr class="'+(x.rM<=1?'pro-pass':'pro-fail')+'"><td>'+x.c.name+'</td><td class="num">'+f(x.c.k1,2)+'</td><td class="num">'+f(x.Md,1)+'</td><td class="num">'+f(x.c.M,1)+'</td><td class="num">'+f(x.rM,3)+'</td><td>'+(x.rM<=1?'PASS':'FAIL')+'</td></tr>').join('')+'</tbody></table>');
+    H+=step('BU7','Bending capacity M<sub>d</sub> = φ k₁ k₄ k₆ k₉ k₁₂ f′<sub>b</sub> Z for every load case','<table class="matrix"><thead><tr><th>Load case</th><th>k₁</th><th>M<sub>d</sub> (kN·m)</th><th>M* (kN·m)</th><th>Load ratio</th><th>Result</th></tr></thead><tbody>'+P.rows.map(x=>'<tr class="'+(x.rM<=1?'pro-pass':'pro-fail')+'"><td>'+x.c.name+'</td><td class="num">'+f(x.c.k1,2)+'</td><td class="num">'+f(phi,2)+'×'+f(x.c.k1,2)+'×'+f(k4,1)+'×'+f(k6,1)+'×'+f(k9,1)+'×'+f(P.k12,2)+'×'+f(fb,0)+'×'+f(s.Z/1e3,0)+'×10³ / 10⁶ = <b>'+f(x.Md,1)+'</b></td><td class="num">'+f(x.c.M,1)+'</td><td class="num">'+f(x.c.M,1)+' / '+f(x.Md,1)+' = <b>'+f(x.rM,3)+'</b></td><td>'+(x.rM<=1?'PASS':'FAIL')+'</td></tr>').join('')+'</tbody></table>');
     if(P.svc.length){
       H+=step('BU8','Serviceability — deflection of the chosen section',eq('I = b d³/12 = '+s.b+' × '+s.d+'³/12 = <b>'+f(s.I/1e6,0)+'×10⁶ mm⁴</b>; δ = 5 L⁴ Σ(j₂w) / (384 E I)')+'<table class="matrix"><thead><tr><th>Load combination</th><th>Σ(j₂ w) (N/mm)</th><th>E (MPa)</th><th>δ (mm)</th><th>δ<sub>lim</sub> (mm)</th><th>Result</th></tr></thead><tbody>'+P.svc.map(x=>'<tr class="'+(x.ok?'pro-pass':'pro-fail')+'"><td>'+x.r.name+'</td><td class="num">'+f(x.r.S,1)+'</td><td class="num">'+f(x.r.E,0)+'</td><td class="num">'+f(x.d,2)+'</td><td class="num">'+f(x.r.lim,1)+'</td><td>'+(x.ok?'PASS':'FAIL')+'</td></tr>').join('')+'</tbody></table>'+why((useE5?'Total-load cases use E<sub>0.05</sub> = 0.75 × '+f(E,0)+' = '+f(E5,0)+' MPa (conservative estimate of E); the comfort case uses E<sub>mean</sub>. ':'E<sub>mean</sub> is used — state "conservative estimate of E" to use the 5th-percentile value. ')+'Limit: '+(totalLim?f(totalLim.v,1)+' mm ('+totalLim.why+')':'')+'. When every deflection is well below its limit the design is governed by the strength limit state.'));
     }
-    H+=step('BU9','Shear capacity V<sub>d</sub> = φ k₁ k₄ k₆ f′<sub>s</sub> A<sub>s</sub>','<div class="eq">A<sub>s</sub> = 0.667 b d = 0.667 × '+s.d+' × '+s.b+' = <b>'+f(0.667*s.b*s.d/1e3,1)+'×10³ mm²</b> (Cl 3.2.5)</div><table class="matrix"><thead><tr><th>Load case</th><th>V<sub>d</sub> (kN)</th><th>V* (kN)</th><th>Load ratio</th><th>Result</th></tr></thead><tbody>'+P.rows.map(x=>'<tr class="'+(x.rV<=1?'pro-pass':'pro-fail')+'"><td>'+x.c.name+'</td><td class="num">'+f(x.Vd,1)+'</td><td class="num">'+f(x.c.V,1)+'</td><td class="num">'+f(x.rV,3)+'</td><td>'+(x.rV<=1?'PASS':'FAIL')+'</td></tr>').join('')+'</tbody></table>');
-    if(Lb)H+=step('BU10','Bearing capacity N<sub>d,p</sub> = φ k₁ k₄ k₆ k₇ f′<sub>p</sub> A<sub>p</sub>','<div class="eq">A<sub>p</sub> = '+f(Lb,0)+' × '+s.b+' = '+f(Lb*s.b,0)+' mm²; k₇ = 1.0 (bearing at the end of the member does not meet the conditions for k₇ &gt; 1, Cl 2.4.4)</div><table class="matrix"><thead><tr><th>Load case</th><th>N<sub>d,p</sub> (kN)</th><th>N* (kN)</th><th>Load ratio</th><th>Result</th></tr></thead><tbody>'+P.rows.map(x=>'<tr class="'+(x.rN<=1?'pro-pass':'pro-fail')+'"><td>'+x.c.name+'</td><td class="num">'+f(x.Nd,1)+'</td><td class="num">'+f(x.c.N,1)+'</td><td class="num">'+f(x.rN,3)+'</td><td>'+(x.rN<=1?'PASS':'FAIL')+'</td></tr>').join('')+'</tbody></table>');
+    H+=step('BU9','Shear capacity V<sub>d</sub> = φ k₁ k₄ k₆ f′<sub>s</sub> A<sub>s</sub>','<div class="eq">A<sub>s</sub> = 0.667 b d = 0.667 × '+s.d+' × '+s.b+' = <b>'+f(0.667*s.b*s.d/1e3,1)+'×10³ mm²</b> (Cl 3.2.5)</div><table class="matrix"><thead><tr><th>Load case</th><th>V<sub>d</sub> (kN)</th><th>V* (kN)</th><th>Load ratio</th><th>Result</th></tr></thead><tbody>'+P.rows.map(x=>'<tr class="'+(x.rV<=1?'pro-pass':'pro-fail')+'"><td>'+x.c.name+'</td><td class="num">'+f(phi,2)+'×'+f(x.c.k1,2)+'×'+f(k4,1)+'×'+f(k6,1)+'×'+f(fs,1)+'×'+f(0.667*s.b*s.d/1e3,1)+'×10³ / 10³ = <b>'+f(x.Vd,1)+'</b></td><td class="num">'+f(x.c.V,1)+'</td><td class="num">'+f(x.c.V,1)+' / '+f(x.Vd,1)+' = <b>'+f(x.rV,3)+'</b></td><td>'+(x.rV<=1?'PASS':'FAIL')+'</td></tr>').join('')+'</tbody></table>');
+    if(Lb)H+=step('BU10','Bearing capacity N<sub>d,p</sub> = φ k₁ k₄ k₆ k₇ f′<sub>p</sub> A<sub>p</sub>','<div class="eq">A<sub>p</sub> = '+f(Lb,0)+' × '+s.b+' = '+f(Lb*s.b,0)+' mm²; k₇ = 1.0 (bearing at the end of the member does not meet the conditions for k₇ &gt; 1, Cl 2.4.4)</div><table class="matrix"><thead><tr><th>Load case</th><th>N<sub>d,p</sub> (kN)</th><th>N* (kN)</th><th>Load ratio</th><th>Result</th></tr></thead><tbody>'+P.rows.map(x=>'<tr class="'+(x.rN<=1?'pro-pass':'pro-fail')+'"><td>'+x.c.name+'</td><td class="num">'+f(phi,2)+'×'+f(x.c.k1,2)+'×'+f(k4,1)+'×'+f(k6,1)+'×1.0×'+f(fp,0)+'×('+s.b+'×'+f(Lb,0)+') / 10³ = <b>'+f(x.Nd,1)+'</b></td><td class="num">'+f(x.c.N,1)+'</td><td class="num">'+f(x.c.N,1)+' / '+f(x.Nd,1)+' = <b>'+f(x.rN,3)+'</b></td><td>'+(x.rN<=1?'PASS':'FAIL')+'</td></tr>').join('')+'</tbody></table>');
     H+='</section>';
     return shell(H,warn);
   }
@@ -7353,6 +7353,29 @@ ${o}`;return q||'Question supplied by image/PDF';}
     const bear=(()=>{try{return w8Bearing(t,grade,{d:190,b:45});}catch(e){return null;}})();
     const j2max=W9_J2_MAX[w9MoistureCat(t)]??2;
     const lims=lsLimits(t,L),svc=ls.service||[];
+    // ---- BD1: deflection limits. Stated limits are used; if none is stated the Week 9 guidance (p.23) lower bound is ASSUMED so serviceability is never skipped.
+    let limAssumed=null;
+    if(!lims.total&&!lims.imposed&&!lims.any){
+      const joist=/\bjoists?\b/.test(t)&&!/bearer|beam/.test(t),rafter=/rafter/.test(t),lintel=/lintel/.test(t);
+      const den=ovHas('defDen')?UE_OV.defDen:(joist?300:rafter?250:250);
+      if(lintel&&!ovHas('defDen')){lims.total={v:20,why:'lintel: 20 mm maximum (Week 9 p.23 guidance, assumed)'};limAssumed='lintel 20 mm';}
+      else if(joist){lims.imposed={v:L/den,why:`span/${den} = ${ueNum(L,0)}/${den} under imposed load (Week 9 p.23 guidance for floor joists, assumed)`};limAssumed=`floor joist: span/${den} under imposed load`;}
+      else{lims.total={v:L/den,why:`span/${den} = ${ueNum(L,0)}/${den} under total load (Week 9 p.23 guidance for bearers/beams, assumed)`};limAssumed=`beam/bearer: span/${den} under total load`;}
+      trk('defDen','Deflection limit — span / …',String(den),'Week 9 p.23 guidance (assumed — no limit stated)','Week 9','No deflection limit is stated, so the lower-bound guidance value is used; type the span/… value your question or client requires.');
+    }
+    // ---- BD2: design modulus of elasticity. E mean for comfort/appearance; the 5th percentile E where exceeding the limit causes damage (Handbook Ex 5.5).
+    const critDefl=/clearance|glass|window|door|partition|brittle|damage|absolute|critical|5th percentile|e\s*0\.05|conservative estimate of e/.test(t);
+    const e05f=/^F\d/.test(grade)?0.5:/^MGP|^A17/.test(grade)?0.7:/^GL/.test(grade)?0.75:0.85;
+    const Emean0=(gradeProps(grade,190,species)||{}).E;
+    // ---- BD3/BD4: serviceability combinations with j2 per component, and the required second moment of area I ≥ 5L⁴Σ(j2 w)/(384 E δlim)
+    const bdRows=[];
+    if(Emean0&&svc.length)svc.forEach(sc=>{const lim=sc.limitKind==='imposed'?(lims.imposed||lims.any):sc.limitKind==='wind'?lims.wind:(lims.total||lims.any);if(!lim)return;const Ev=critDefl&&sc.limitKind!=='imposed'?e05f*Emean0:Emean0;const sum=sc.parts.reduce((a,q)=>a+(q.dur==='long'?j2max:1)*q.v,0);bdRows.push({sc,lim,E:Ev,sum,I:5*Math.pow(L,4)*sum/(384*Ev*lim.v),parts:sc.parts.map(q=>`${q.dur==='long'?ueNum(j2max,1):'1.0'} × ${ueNum(q.v,3)}`).join(' + ')});});
+    const Imin=bdRows.length?Math.max(...bdRows.map(x=>x.I)):0;
+    const EforDefl=sc=>critDefl&&sc.limitKind!=='imposed'?e05f:1;
+    // joists / battens at stated centres fastened to the top edge restrain the compression edge at that spacing (Handbook Ex 5.1, 5.6)
+    const topM=t.match(/(?:joists?|battens?|purlins?|cross(?:ing)? members?)[^.]{0,60}?(\d+(?:\.\d+)?)\s*(mm|m)\s*(?:on\s*|at\s*)?(?:centres|centers|c\/c)[^.]{0,80}(?:nailed|fixed|fastened|screwed|attached|strapped|skew)[^.]{0,50}(?:top|compression)/)||t.match(/(?:joists?|battens?)[^.]{0,60}(?:attached|nailed|fixed|fastened|strapped)[^.]{0,40}(?:top|compression)[^.]{0,80}?(?:spacing|centres)[^0-9]{0,20}(\d+(?:\.\d+)?)\s*(mm|m)/);
+    const LayTop=topM?+topM[1]*(topM[2]==='m'?1000:1):null;
+    const LpAdopted=(Lp==null&&cs.some(c=>c.eff.Nb!=null))?[45,70,90,100,120,150,200]:null;
     const check=(sz)=>{
       const b=sz.b,d=sz.d,Z=b*d*d/6,pr=gradeProps(grade,d,species);
       let fb=pr.fb;if(d>300&&/^F/.test(grade)&&!ovHas('fb'))fb*=Math.pow(300/d,0.167);
@@ -7360,23 +7383,34 @@ ${o}`;return q||'Question supplied by image/PDF';}
       let S1,S1why;
       if(ovHas('S1')){S1=UE_OV.S1;S1why='your value';}
       else if(contin){S1=0;S1why='continuous restraint to the compression edge (flooring nailed / glued on) → S₁ = 0';}
+      else if(LayTop){S1=1.25*(d/b)*Math.sqrt(LayTop/d);S1why=`joists/battens fastened to the top (compression) edge at ${ueNum(LayTop,0)} mm centres act as discrete lateral restraints: L<sub>ay</sub> = ${ueNum(LayTop,0)} mm, S₁ = 1.25(d/b)(L<sub>ay</sub>/d)<sup>0.5</sup> = 1.25 × (${d}/${b}) × (${ueNum(LayTop,0)}/${d})<sup>0.5</sup> = ${ueNum(1.25*(d/b)*Math.sqrt(LayTop/d),3)} (Cl 3.2.3.2(a))`;}
       else{const r=w6restraint(t,{b,d});if(r&&r.S1!=null){S1=r.S1;S1why=r.why;}else{S1=1.25*(d/b)*Math.sqrt(L/d);S1why=`restraint not stated: compression edge held only at the supports, L<sub>ay</sub> = L = ${ueNum(L,0)} mm, S₁ = 1.25(d/b)√(L<sub>ay</sub>/d)`;}}
       const x=(rho||1)*S1,k12=ovHas('k12')?UE_OV.k12:(x<=10?1:x<20?1.5-0.05*x:200/(x*x));
       const rows=[];let worst=0,fail=[];
-      cs.forEach(c=>{const Md=phi*c.k1*k4*k6*k9*k12*fb*Z/1e6,r=c.eff.M/Md;rows.push({kind:'Bending',c,cap:Md,dem:c.eff.M,r});if(r>worst)worst=r;if(r>1)fail.push('bending');});
+      const k9s=sz.n>1?Math.max(k9,w6g(sz.n)):k9;
+      cs.forEach(c=>{const Md=phi*c.k1*k4*k6*k9s*k12*fb*Z/1e6,r=c.eff.M/Md;rows.push({kind:'Bending',c,cap:Md,dem:c.eff.M,r,sub:`${ueNum(phi,2)}×${ueNum(c.k1,2)}×${ueNum(k4,2)}×${ueNum(k6,2)}×${ueNum(k9s,3)}×${ueNum(k12,3)}×${ueNum(fb,1)}×${ueNum(Z,0)}/10⁶`});if(r>worst)worst=r;if(r>1)fail.push('bending');});
       const fs=ovHas('fs')?UE_OV.fs:(pr.fs??null),As=2/3*b*d;
-      if(fs!=null)cs.forEach(c=>{if(c.eff.V==null)return;const Vd=phi*c.k1*k4*k6*As*fs/1000,r=c.eff.V/Vd;rows.push({kind:'Shear',c,cap:Vd,dem:c.eff.V,r});if(r>worst)worst=r;if(r>1)fail.push('shear');});
+      if(fs!=null)cs.forEach(c=>{if(c.eff.V==null)return;const Vd=phi*c.k1*k4*k6*As*fs/1000,r=c.eff.V/Vd;rows.push({kind:'Shear',c,cap:Vd,dem:c.eff.V,r,sub:`${ueNum(phi,2)}×${ueNum(c.k1,2)}×${ueNum(k4,2)}×${ueNum(k6,2)}×${ueNum(As,0)}×${ueNum(fs,2)}/10³`});if(r>worst)worst=r;if(r>1)fail.push('shear');});
       let fp=ovHas('fp')?UE_OV.fp:(bear&&bear.ok?bear.fp:null),k7=null;
-      if(Lp!=null&&fp!=null){k7=ovHas('k7')?UE_OV.k7:w8k7(Lp,edgeOk).v;cs.forEach(c=>{if(c.eff.Nb==null)return;const N=phi*c.k1*k4*k6*k7*b*Lp*fp/1000,r=c.eff.Nb/N;rows.push({kind:'Bearing',c,cap:N,dem:c.eff.Nb,r});if(r>worst)worst=r;if(r>1)fail.push('bearing');});}
+      let LpU=Lp;
+      if(LpU==null&&LpAdopted&&fp!=null){LpU=LpAdopted.find(x=>cs.every(c=>c.eff.Nb==null||c.eff.Nb<=phi*c.k1*k4*k6*w8k7(x,edgeOk).v*b*x*fp/1000))||LpAdopted[LpAdopted.length-1];}
+      if(LpU!=null&&fp!=null){k7=ovHas('k7')?UE_OV.k7:w8k7(LpU,edgeOk).v;cs.forEach(c=>{if(c.eff.Nb==null)return;const N=phi*c.k1*k4*k6*k7*b*LpU*fp/1000,r=c.eff.Nb/N;rows.push({kind:'Bearing',c,cap:N,dem:c.eff.Nb,r,sub:`${ueNum(phi,2)}×${ueNum(c.k1,2)}×${ueNum(k4,2)}×${ueNum(k6,2)}×${ueNum(k7,3)}×(${ueNum(b,0)}×${ueNum(LpU,0)})×${ueNum(fp,1)}/10³`});if(r>worst)worst=r;if(r>1)fail.push('bearing');});}
       const E=pr.E,I=b*d*d*d/12;let defl=[];
-      if(E&&svc.length){svc.forEach(sc=>{const sum=sc.parts.reduce((a,q)=>a+(q.dur==='long'?j2max:1)*q.v,0),dl=5*sum*Math.pow(L,4)/(384*E*I);const lim=sc.limitKind==='imposed'?(lims.imposed||lims.any):sc.limitKind==='wind'?lims.wind:(lims.total||lims.any);const r=lim?dl/lim.v:null;defl.push({sc,sum,dl,lim,r});if(r!=null){if(r>worst)worst=r;if(r>1)fail.push('deflection');}});}
-      return {sz,Z,fb,S1,S1why,k12,x,rows,defl,fs,As,fp,k7,pr,worst,fail:[...new Set(fail)],ok:fail.length===0};
+      if(E&&svc.length){svc.forEach(sc=>{const Eu=E*EforDefl(sc),sum=sc.parts.reduce((a,q)=>a+(q.dur==='long'?j2max:1)*q.v,0),dl=5*sum*Math.pow(L,4)/(384*Eu*I);const lim=sc.limitKind==='imposed'?(lims.imposed||lims.any):sc.limitKind==='wind'?lims.wind:(lims.total||lims.any);const r=lim?dl/lim.v:null;defl.push({sc,sum,dl,lim,r});if(r!=null){if(r>worst)worst=r;if(r>1)fail.push('deflection');}});}
+      return {sz,Z,fb,S1,S1why,k12,x,rows,defl,fs,As,fp,k7,pr,worst,k9s,LpU,fail:[...new Set(fail)],ok:fail.length===0};
     };
+    // No bearing length stated: the smallest buildable length that carries the largest reaction is ADOPTED (never left unknown).
+
     // ---- guess, then iterate
-    let start=sizes.findIndex(s=>s.b*s.d*s.d/6>=Zmin);if(start<0)start=sizes.length-1;
+    let start=sizes.findIndex(s=>s.b*s.d*s.d/6>=Zmin&&s.b*Math.pow(s.d,3)/12>=Imin);if(start<0)start=sizes.length-1;
     const trials=[];let pick=null;
-    let lightest=null,swapNote='';
-    for(let i=start;i<sizes.length&&trials.length<16;i++){
+    let lightest=null,swapNote='',lamNote='';
+    // If no single member works, nail-laminated members (2 or 3 side by side) are tried — AS 1720.1 k9 for n combined members (g31, Table 2.7).
+    {const singles=sizes.length;[2,3].forEach(n=>ueStdSizes(fam).forEach(s0=>sizes.push(Object.assign({},s0,{n,bn:s0.bn*n,b:s0.b*n,lab:`${n} / ${s0.bn} × ${s0.dn}`}))));
+     const lam=sizes.splice(singles).sort((a,c)=>a.b*a.d-c.b*c.d);sizes.push(...lam);sizes.singles=singles;}
+    for(let i=start;i<sizes.length&&trials.length<24;i++){
+      if(i>=sizes.singles&&(sizes[i].b*sizes[i].d*sizes[i].d/6<Zmin||sizes[i].b*Math.pow(sizes[i].d,3)/12<Imin))continue;
+      if(i===sizes.singles&&!pick)lamNote='No single standard section passes every check, so <b>nail-laminated members</b> (two or three pieces side by side, acting together) are tried next. Their combined strength-sharing factor k₉ = g₃₁ for n<sub>com</sub> pieces (Table 2.7).';
       const r=check(sizes[i]);trials.push(r);
       if(r.ok){
         pick=r;lightest=r;
@@ -7392,6 +7426,12 @@ ${o}`;return q||'Question supplied by image/PDF';}
     }
     let H=`<section class="solver-section full"><h3>Beam size design — guess a size, check every requirement, repeat (Handbook Ex 5.7, steps BU1–BU10)</h3>`;
     H+=`<div class="info-box"><b>How the size is found.</b> The strength and stiffness of a timber section depend on the size itself (f′b changes with depth, k₁₂ with b and d, k₉ with span), so the design cannot be solved in one pass. The Handbook flow is: (1) find the critical load case, (2) <b>assume</b> a small-section f′b and k₁₂ = 1, (3) work out the minimum section modulus Z, (4) <b>pick a standard section</b>, (5) replace the assumptions by the actual f′b and k₁₂ for that section and check bending for every load case, deflection, shear and bearing, (6) if any check fails, <b>try the next larger section</b> and repeat.</div>`;
+    // BD1–BD4 (Handbook Ex 5.5): serviceability first — it often governs timber beams — giving the required second moment of area.
+    if(bdRows.length){
+      H+=`<div class="calc-step"><b>BD1 — Deflection limits</b><div class="eq">${['total','imposed'].filter(k=>lims[k]).map(k=>`${k==='total'?'Total load':'Imposed load alone'}: δ<sub>lim</sub> = <b>${ueNum(lims[k].v,1)} mm</b> — ${escapeHtml(lims[k].why)}`).join('<br>')}</div>${limAssumed?`<div class="reason"><b>Assumed:</b> the question gives no deflection limit, so the Week 9 guidance (${escapeHtml(limAssumed)}) is used. It can be changed in “Where every value came from”.</div>`:''}</div>`;
+      H+=`<div class="calc-step"><b>BD2 — Design modulus of elasticity</b><div class="eq">E<sub>mean</sub> = ${ueNum(Emean0,0)} MPa (${/^MGP|^A17/.test(grade)?'Table H3.1':/^F/.test(grade)?'Table H2.1':'Table 7.1'})${critDefl?`<br>E<sub>0.05</sub> = ${e05f} × ${ueNum(Emean0,0)} = <b>${ueNum(e05f*Emean0,0)} MPa</b> for the total-load cases`:''}</div><div class="reason">${critDefl?'Exceeding the limit would damage something (glass, partitions, a clearance), so a lower-bound (5th percentile) E is used for the total-load cases — there is a 50% chance a delivered member is less stiff than the average. The comfort case keeps E<sub>mean</sub> (Handbook Ex 5.5, Week 9 p.42–44).':'The limits protect comfort and appearance only, so the average E<sub>mean</sub> is appropriate (Week 9 p.42–44). Use E<sub>0.05</sub> where damage is possible.'}</div></div>`;
+      H+=`<div class="calc-step"><b>BD3–BD4 — Serviceability combinations and the required second moment of area</b><div class="eq">I ≥ Σ [5 L⁴ (j₂ w) / (384 E δ<sub>lim</sub>)] &nbsp;(uniformly distributed loads, simply supported; j₂ = ${ueNum(j2max,1)} for loads lasting over a year, 1.0 for short-term loads — Table 2.4)</div><table class="matrix"><thead><tr><th>Combination</th><th>Σ(j₂ w) (N/mm)</th><th>E (MPa)</th><th>δ<sub>lim</sub> (mm)</th><th>I required (10⁶ mm⁴)</th></tr></thead><tbody>${bdRows.map(x=>`<tr class="${x.I===Imin?'pro-fail':''}"><td>${escapeHtml(x.sc.name)}${x.I===Imin?' <b>← critical</b>':''}</td><td class="num">${x.parts} = <b>${ueNum(x.sum,3)}</b></td><td class="num">${ueNum(x.E,0)}</td><td class="num">${ueNum(x.lim.v,1)}</td><td class="num">5×${ueNum(L,0)}⁴×${ueNum(x.sum,3)} / (384×${ueNum(x.E,0)}×${ueNum(x.lim.v,1)}) = <b>${ueNum(x.I/1e6,1)}</b></td></tr>`).join('')}</tbody></table><div class="reason">The largest value governs the size for serviceability: <b>I ≥ ${ueNum(Imin/1e6,1)}×10⁶ mm⁴</b>. The strength limit state is then checked (below) and the section must satisfy BOTH.</div></div>`;
+    }
     H+=`<div class="calc-step"><b>Step 1 — critical strength case (D<sub>L</sub> = M*/k₁, BU2)</b><table class="matrix"><thead><tr><th>Load case</th><th>M* (kN·m)</th><th>k₁</th><th>D<sub>L</sub> = M*/k₁</th></tr></thead><tbody>${cs.map(c=>`<tr class="${c===crit?'pro-pass':''}"><td>${escapeHtml(c.name)}${c===crit?' <b>← critical</b>':''}</td><td class="num">${f3(c.eff.M)}</td><td class="num">${ueNum(c.k1,2)}</td><td class="num">${f3(c.DL)}</td></tr>`).join('')}</tbody></table><div class="reason">The critical case is not always the largest moment: a longer-duration load has a smaller k₁ and can govern even with a smaller M*.</div></div>`;
     H+=`<div class="calc-step"><b>Step 2 — factors and the ASSUMED strengths for the first guess (BU3–BU5)</b><table class="matrix"><tbody>`+
       `<tr><td>φ</td><td class="num"><b>${ueNum(phi,2)}</b></td><td>${escapeHtml(cat.reason||cat.why||'')} — Table 2.1</td></tr>`+
@@ -7401,23 +7441,26 @@ ${o}`;return q||'Question supplied by image/PDF';}
       `<tr><td>k₁₂</td><td class="num"><b>1.0 (assumed)</b></td><td>Assumed for the first guess and CHECKED later once the section is known.</td></tr>`+
       `<tr><td>f′b</td><td class="num"><b>${ueNum(fbAssumed,1)} MPa (assumed)</b></td><td>${isMGP?'Table H3.1 row for the smallest depth (70–140 mm)':'Table H2.1'} — strengths vary with size, so this is checked again for the chosen depth.</td></tr>`+
       `</tbody></table></div>`;
-    H+=`<div class="calc-step"><b>Step 3 — minimum section modulus</b><div class="eq">Z<sub>min</sub> = M* / (φ k₁ k₄ k₆ k₉ k₁₂ f′b) = ${f3(crit.eff.M)}×10⁶ / (${ueNum(phi,2)}×${ueNum(crit.k1,2)}×${ueNum(k4,2)}×${ueNum(k6,2)}×${f3(k9)}×1.0×${ueNum(fbAssumed,1)}) = <b>${ueNum(Zmin/1e3,0)}×10³ mm³</b></div><div class="reason">First guess: the smallest standard section with Z ≥ Z<sub>min</sub> is <b>${sizes[start].bn} × ${sizes[start].dn} mm</b>${minus?` (design size ${sizes[start].b} × ${sizes[start].d} mm, unseasoned)`:''}.</div></div>`;
+    H+=`<div class="calc-step"><b>Step 3 — minimum section modulus</b><div class="eq">Z<sub>min</sub> = M* / (φ k₁ k₄ k₆ k₉ k₁₂ f′b) = ${f3(crit.eff.M)}×10⁶ / (${ueNum(phi,2)}×${ueNum(crit.k1,2)}×${ueNum(k4,2)}×${ueNum(k6,2)}×${f3(k9)}×1.0×${ueNum(fbAssumed,1)}) = <b>${ueNum(Zmin/1e3,0)}×10³ mm³</b></div><div class="reason">${Imin?`Serviceability also needs I ≥ ${ueNum(Imin/1e6,1)}×10⁶ mm⁴. `:''}First guess: the smallest standard section with Z ≥ Z<sub>min</sub>${Imin?' and I ≥ I<sub>min</sub>':''} is <b>${sizes[start].bn} × ${sizes[start].dn} mm</b>${minus?` (design size ${sizes[start].b} × ${sizes[start].d} mm, unseasoned)`:''}.</div></div>`;
     // Step 3b (addendum): EVERY standard section that could satisfy Z_min, with Z, I, A and the trade-off between them.
     {const adq=sizes.filter(s=>s.b*s.d*s.d/6>=Zmin).slice(0,10);
      H+=`<div class="calc-step"><b>Step 3b — every standard section that could satisfy Z<sub>min</sub> (${escapeHtml(famInfo.label)})</b><table class="matrix"><thead><tr><th>Section (nominal)</th><th>Z (10³ mm³)</th><th>I (10⁶ mm⁴)</th><th>A (mm²)</th><th>Trade-off</th></tr></thead><tbody>${adq.map((s,i)=>`<tr><td><b>${s.bn} × ${s.dn}</b></td><td class="num">${ueNum(s.b*s.d*s.d/6/1e3,0)}</td><td class="num">${ueNum(s.b*s.d*s.d*s.d/12/1e6,1)}</td><td class="num">${ueNum(s.b*s.d,0)}</td><td class="reason">${i===0?'smallest area that satisfies Z<sub>min</sub>':(s.bn<adq[0].bn?'thinner and deeper: more Z per kg, but a deeper floor profile and less stable (higher S₁)':s.bn>adq[0].bn?'thicker and shallower: lower floor profile, more readily available, heavier':'deeper: heavier')}</td></tr>`).join('')}</tbody></table><div class="reason">The smallest area is not automatically chosen: depth limits, availability and lateral stability are compared, then the section is re-checked with ITS OWN f′b and k₁₂ (Step 4–5). Handbook Ex 5.7 compares 170×35 with 140×45 and picks 140×45 because it is shallower and more readily available.</div></div>`;}
-    H+=`<div class="calc-step"><b>Step 4 — trial sections: check everything, move up until all requirements are met</b><table class="matrix"><thead><tr><th>Section (nominal)</th><th>Z (10³ mm³)</th><th>f′b</th><th>ρ<sub>b</sub>S₁</th><th>k₁₂</th><th>Largest load ratio</th><th>Result</th></tr></thead><tbody>${trials.map(r=>`<tr class="${r.ok?'pro-pass':'pro-fail'}"><td><b>${r.sz.bn} × ${r.sz.dn}</b></td><td class="num">${ueNum(r.Z/1e3,0)}</td><td class="num">${ueNum(r.fb,1)}</td><td class="num">${ueNum(r.x,2)}</td><td class="num">${ueNum(r.k12,3)}</td><td class="num">${ueNum(r.worst,3)}</td><td>${r.ok?'<b>✔ all checks pass</b>':'✘ fails: '+r.fail.join(', ')}</td></tr>`).join('')}</tbody></table></div>`;
+    H+=`<div class="calc-step"><b>Step 4 — trial sections: check everything, move up until all requirements are met</b><table class="matrix"><thead><tr><th>Section (nominal)</th><th>Z (10³ mm³)</th><th>I (10⁶ mm⁴)</th><th>f′b</th><th>ρ<sub>b</sub>S₁</th><th>k₁₂</th><th>Largest load ratio</th><th>Result</th></tr></thead><tbody>${trials.map(r=>`<tr class="${r.ok?'pro-pass':'pro-fail'}"><td><b>${r.sz.lab||r.sz.bn+' × '+r.sz.dn}</b></td><td class="num">${ueNum(r.Z/1e3,0)}</td><td class="num">${ueNum(r.sz.b*Math.pow(r.sz.d,3)/12/1e6,1)}</td><td class="num">${ueNum(r.fb,1)}</td><td class="num">${ueNum(r.x,2)}</td><td class="num">${ueNum(r.k12,3)}</td><td class="num">${ueNum(r.worst,3)}</td><td>${r.ok?'<b>✔ all checks pass</b>':'✘ fails: '+r.fail.join(', ')}</td></tr>`).join('')}</tbody></table></div>`;
+    if(lamNote)H+=`<div class="info-box">${lamNote}</div>`;
     if(!pick){H+=`<div class="def-warning">No standard sawn section in the list meets every requirement. Use a stronger grade, glulam or LVL, add lateral restraint, or shorten the span.</div></section>`;return H;}
     const r=pick;
     if(swapNote)H+=`<div class="info-box"><b>Choosing between adequate sections.</b> ${swapNote}</div>`;
-    H+=`<div class="check-hero"><b>PASS</b> — select <b>${r.sz.bn} × ${r.sz.dn} mm ${grade}</b>${minus?` (design size ${r.sz.b} × ${r.sz.d} mm)`:''}; governing load ratio ${ueNum(r.worst,3)}.</div>`;
+    H+=`<div class="check-hero"><b>PASS</b> — select <b>${r.sz.lab?r.sz.lab+' mm (nail-laminated)':r.sz.bn+' × '+r.sz.dn+' mm'} ${grade}</b>${minus?` (design size ${r.sz.b} × ${r.sz.d} mm)`:''}; governing load ratio ${ueNum(r.worst,3)}.</div>`;
     H+=`<div class="calc-step"><b>Step 5 — assumptions checked for the selected section</b><div class="eq">f′b = ${ueNum(r.fb,1)} MPa (${isMGP?`Table H3.1, depth row up to ${r.pr.depthBand} mm`:'Table H2.1'}) ${Math.abs(r.fb-fbAssumed)<1e-9?'= assumed value ✔':'≠ assumed '+ueNum(fbAssumed,1)+' MPa — the actual value is used in every check below'}<br>S₁ = ${ueNum(r.S1,3)}, ρ<sub>b</sub> = ${ueNum(rho,2)} → ρ<sub>b</sub>S₁ = ${ueNum(r.x,2)} → k₁₂ = <b>${ueNum(r.k12,3)}</b> ${r.k12===1?'= assumed 1.0 ✔':'≠ assumed 1.0 — the actual value is used'}</div><div class="reason">${r.S1why}</div></div>`;
-    const grp=(kind,sym,unit)=>{const rows=r.rows.filter(x=>x.kind===kind);if(!rows.length)return '';return `<div class="calc-step"><b>${kind} — every load case (${sym})</b><table class="matrix"><thead><tr><th>Load case</th><th>Demand</th><th>k₁</th><th>Capacity (${unit})</th><th>Load ratio</th><th>Result</th></tr></thead><tbody>${rows.map(x=>`<tr class="${x.r<=1?'pro-pass':'pro-fail'}"><td>${escapeHtml(x.c.name)}</td><td class="num">${f3(x.dem)}</td><td class="num">${ueNum(x.c.k1,2)}</td><td class="num">${f3(x.cap)}</td><td class="num">${f3(x.r)}</td><td>${x.r<=1?'PASS':'FAIL'}</td></tr>`).join('')}</tbody></table></div>`;};
+    const grp=(kind,sym,unit)=>{const rows=r.rows.filter(x=>x.kind===kind);if(!rows.length)return '';return `<div class="calc-step"><b>${kind} — every load case (${sym})</b><table class="matrix"><thead><tr><th>Load case</th><th>Demand</th><th>k₁</th><th>Capacity (${unit})</th><th>Load ratio</th><th>Result</th></tr></thead><tbody>${rows.map(x=>`<tr class="${x.r<=1?'pro-pass':'pro-fail'}"><td>${escapeHtml(x.c.name)}</td><td class="num">${f3(x.dem)}</td><td class="num">${ueNum(x.c.k1,2)}</td><td class="num">${x.sub?x.sub+' = ':''}<b>${f3(x.cap)}</b></td><td class="num">${f3(x.dem)} / ${f3(x.cap)} = <b>${f3(x.r)}</b></td><td>${x.r<=1?'PASS':'FAIL'}</td></tr>`).join('')}</tbody></table></div>`;};
     H+=grp('Bending','M<sub>d</sub> = φk₁k₄k₆k₉k₁₂f′<sub>b</sub>Z','kN·m');
     if(r.defl.length){H+=`<div class="calc-step"><b>Deflection — every serviceability combination (δ = 5L⁴Σ(jw)/(384EI), j₂ = ${ueNum(j2max,1)} for long-term parts)</b><table class="matrix"><thead><tr><th>Combination</th><th>Σ(j·w) (N/mm)</th><th>δ (mm)</th><th>Limit (mm)</th><th>Result</th></tr></thead><tbody>${r.defl.map(x=>`<tr class="${x.r==null?'':x.r<=1?'pro-pass':'pro-fail'}"><td>${escapeHtml(x.sc.name)}</td><td class="num">${f3(x.sum)}</td><td class="num">${ueNum(x.dl,2)}</td><td class="num">${x.lim?ueNum(x.lim.v,1)+' <span class="reason">('+escapeHtml(x.lim.why)+')</span>':'—'}</td><td>${x.r==null?'no limit stated':x.r<=1?'PASS':'FAIL'}</td></tr>`).join('')}</tbody></table></div>`;}
     H+=grp('Shear','V<sub>d</sub> = φk₁k₄k₆A<sub>s</sub>f′<sub>s</sub>, A<sub>s</sub> = ⅔bd','kN');
-    if(Lp!=null&&r.fp!=null)H+=grp('Bearing',`N<sub>d,p</sub> = φk₁k₄k₆k₇A<sub>p</sub>f′<sub>p</sub>, A<sub>p</sub> = b×L<sub>p</sub> = ${ueNum(r.sz.b,0)}×${ueNum(Lp,0)}, k₇ = ${ueNum(r.k7,3)}, f′p = ${ueNum(r.fp,1)} MPa (perpendicular to grain: a joist/beam resting on a support)`,'kN');
-    if(Lp!=null&&r.fp!=null)H+=`<div class="info-box"><b>Why perpendicular-to-grain bearing (N<sub>d,p</sub>)?</b> The joist/beam is a bending member resting on a support, so the reaction presses across its fibres — that is bearing perpendicular to grain (Week 8 p.15, Handbook Fig 5.24) and it uses k₇. Bearing <i>parallel</i> to grain (N<sub>d,ℓ</sub>) is only for a column or post pushing on its end grain, and N<sub>d,θ</sub> only when the load meets the grain at an angle θ (inclined strut/rafter). Bearing length L<sub>p</sub> = ${ueNum(Lp,0)} mm is the width of the supporting element, taken from the question (Handbook Ex 5.7 step BU10). k₇ = ${ueNum(r.k7,3)}: ${edgeOk?'at least 75 mm of timber extends beyond the bearing':'k₇ > 1 needs at least 75 mm of timber beyond both sides of the bearing and a bearing shorter than 150 mm — not stated, so k₇ = 1.0'}.</div>`;
-    else H+=`<div class="info-box"><b>Bearing.</b> No bearing length (width of the supporting beam / wall plate) is stated, so it is not assumed. The reaction is ${f3(Math.max(...cs.map(c=>c.eff.Nb||0)))} kN; state the support width to check N<sub>d,p</sub>.</div>`;
+    if(Lp==null&&r.LpU!=null)H+=`<div class="info-box"><b>Bearing length adopted.</b> No support width is stated, so the smallest standard bearing length that carries every reaction is adopted: <b>L<sub>p</sub> = ${r.LpU} mm</b> (tried 45, 70, 90, 100 … mm). Type the real width of the support to replace it.</div>`;
+    const LpShow=Lp!=null?Lp:r.LpU;
+    if(LpShow!=null&&r.fp!=null)H+=grp('Bearing',`N<sub>d,p</sub> = φk₁k₄k₆k₇A<sub>p</sub>f′<sub>p</sub>, A<sub>p</sub> = b×L<sub>p</sub> = ${ueNum(r.sz.b,0)}×${ueNum(LpShow,0)}, k₇ = ${ueNum(r.k7,3)}, f′p = ${ueNum(r.fp,1)} MPa (perpendicular to grain: a joist/beam resting on a support)`,'kN');
+    if(LpShow!=null&&r.fp!=null)H+=`<div class="info-box"><b>Why perpendicular-to-grain bearing (N<sub>d,p</sub>)?</b> The joist/beam is a bending member resting on a support, so the reaction presses across its fibres — that is bearing perpendicular to grain (Week 8 p.15, Handbook Fig 5.24) and it uses k₇. Bearing <i>parallel</i> to grain (N<sub>d,ℓ</sub>) is only for a column or post pushing on its end grain, and N<sub>d,θ</sub> only when the load meets the grain at an angle θ (inclined strut/rafter). Bearing length L<sub>p</sub> = ${ueNum(Lp,0)} mm is the width of the supporting element, taken from the question (Handbook Ex 5.7 step BU10). k₇ = ${ueNum(r.k7,3)}: ${edgeOk?'at least 75 mm of timber extends beyond the bearing':'k₇ > 1 needs at least 75 mm of timber beyond both sides of the bearing and a bearing shorter than 150 mm — not stated, so k₇ = 1.0'}.</div>`;
+    else if(LpShow==null)H+=`<div class="info-box"><b>Bearing.</b> No bearing length (width of the supporting beam / wall plate) is stated, so it is not assumed. The reaction is ${f3(Math.max(...cs.map(c=>c.eff.Nb||0)))} kN; state the support width to check N<sub>d,p</sub>.</div>`;
     // sources, corrections and real lecture tables
     try{
       const R=[],add=(sym,val,ref,wk,why,key)=>R.push({sym,val,ref,wk,why,key});
@@ -7554,7 +7597,7 @@ ${o}`;return q||'Question supplied by image/PDF';}
     if(!pick){return H+`<div class="def-warning">No standard section in the list passes every load case. Use a stronger grade or a larger member.</div></section>`;}
     H+=`<div class="calc-step"><b>T9 (loop) — actual f′t for each section's own depth; sections that fail are dropped</b><table class="matrix"><thead><tr><th>Section</th><th>Assumed f′t</th><th>Actual f′t (depth ${''}d)</th><th>A<sub>t</sub></th><th>Largest load ratio</th><th>Result</th></tr></thead><tbody>${loop.map(x=>`<tr class="${x.r.ok?'pro-pass':'pro-fail'}"><td><b>${x.p.sz.bn} × ${x.p.sz.dn}</b></td><td class="num">${ueNum(ft0,1)}</td><td class="num">${ueNum(x.r.ft,2)}</td><td class="num">${ueNum(x.r.At,0)}</td><td class="num">${f3(x.r.worst)}</td><td>${x.r.ok?'<b>✔ kept</b>':'✘ dropped — fails with its own f′t'}</td></tr>`).join('')}</tbody></table></div>`;
     const r=pick;
-    H+=`<div class="check-hero"><b>PASS</b> — select <b>${r.sz.bn} × ${r.sz.dn} mm ${grade}</b>${famInfo.minus?` (design size ${r.sz.b} × ${r.sz.d} mm)`:''}: the lightest standard section that carries every load case with its own table values and has a member wide enough for the connection${minW?` (> ${ueNum(minW,0)} mm)`:''}.</div>`;
+    H+=`<div class="check-hero"><b>PASS</b> — select <b>${r.sz.lab?r.sz.lab+' mm (nail-laminated)':r.sz.bn+' × '+r.sz.dn+' mm'} ${grade}</b>${famInfo.minus?` (design size ${r.sz.b} × ${r.sz.d} mm)`:''}: the lightest standard section that carries every load case with its own table values and has a member wide enough for the connection${minW?` (> ${ueNum(minW,0)} mm)`:''}.</div>`;
     H+=`<div class="calc-step"><b>T9 — actual values for d = ${ueNum(r.sz.dn,0)} mm, then N<sub>d,t</sub> = φ k₁ k₄ k₆ f′<sub>t</sub> A<sub>t</sub> for every load case</b><div class="eq">f′<sub>t</sub> = ${ueNum(r.ft,2)} MPa ${Math.abs(r.ft-ft0)<1e-9?'= assumed value ✔':'≠ assumed '+ueNum(ft0,1)+' MPa — the actual value is used'} · A<sub>t</sub> = ${ueNum(r.sz.b,0)}×${ueNum(r.sz.d,0)} − ${nr}×${ueNum(D,0)}×${ueNum(r.sz.b,0)} = <b>${ueNum(r.At,0)} mm²</b></div><table class="matrix"><thead><tr><th>Load case</th><th>N* (kN)</th><th>k₁</th><th>k₄</th><th>N<sub>d,t</sub> (kN)</th><th>Load ratio</th><th>Margin</th><th>Result</th></tr></thead><tbody>${r.rows.map(x=>`<tr class="${x.r<=1?'pro-pass':'pro-fail'}"><td>${escapeHtml(x.c.name)}</td><td class="num">${f3(x.c.N)}</td><td class="num">${ueNum(x.c.k1,2)}</td><td class="num">${ueNum(x.k4c,2)}</td><td class="num">${ueNum(x.cap,1)}</td><td class="num">${f3(x.r)}</td><td class="num">${pct(x.r)}</td><td>${x.r<=1?'PASS':'FAIL'}</td></tr>`).join('')}</tbody></table><div class="reason">${dryInside&&r.k4t>1?`T6 refinement (Handbook Ex 3.5 T7): unseasoned timber inside a dry building partly seasons, so for load cases of 5 months or longer k₄ = ${ueNum(r.k4t,2)} (Table 2.5, nominal thickness ${r.sz.bn} mm); shorter cases keep k₄ = 1.0. `:''}Check: N* ≤ N<sub>d,t</sub> for every case (Cl 3.4.1). ${r.ft<ft0?'Size effect (150/d)^0.167 applied: the member is deeper than 150 mm.':'The member is not deeper than 150 mm, so there is no size reduction.'} ${src}.</div></div>`;
     // T10 serviceability
     const svc=(ls.service||[]).filter(sc=>sc.parts&&sc.parts.length);
@@ -10142,7 +10185,7 @@ I can explain where a value came from, audit the website's solution, solve step 
   <div id="ai-advanced" class="ai-advanced">
     <label for="ai-backend-url">AI backend URL</label>
     <input id="ai-backend-url" value="/api/chat-stream" placeholder="https://timber-structure-calculation.onrender.com/api/chat-stream">
-    <small>For a deployed site using the included server, leave this as <b>/api/chat-stream</b>. The OpenAI API key stays on the server and is never placed in this webpage.</small>
+    <small>For a deployed site using the included server, leave this as <b>/api/chat-stream</b>. The Anthropic API key stays on the server and is never placed in this webpage.</small>
   </div>
 
   <div class="ai-composer">
@@ -10210,6 +10253,14 @@ I can explain where a value came from, audit the website's solution, solve step 
     localStorage.removeItem(HISTORY_KEY);
     scroll.innerHTML='';
     bubble('assistant','New chat started. Ask a BET402 question, paste a numerical problem, or ask me to explain the current website solution.');
+  }
+
+  function chatHistory(current){
+    const rows=[...scroll.querySelectorAll('.ai-bubble.user,.ai-bubble.assistant')]
+      .map(el=>({role:el.classList.contains('user')?'user':'assistant',text:(el.childNodes[0]?.textContent||'').trim()}))
+      .filter(r=>r.text);
+    if(rows.length&&rows[rows.length-1].role==='user'&&rows[rows.length-1].text===current)rows.pop();
+    return rows.slice(-8).map(r=>({role:r.role,text:r.text.slice(0,2000)}));
   }
 
   function pageContext(){
@@ -10287,7 +10338,16 @@ I can explain where a value came from, audit the website's solution, solve step 
   }
 
   async function healthCheck(){
-    setConnection('online','Offline tutor · runs on this device · no network connection');
+    if(!(location.protocol==='http:'||location.protocol==='https:')){
+      setConnection('online','Offline tutor · runs on this device · no network connection');
+      return false;
+    }
+    try{
+      const r=await fetch('/api/chat-stream',{method:'GET',cache:'no-store'});
+      if(r.status===405||r.ok){liveConnected=true;setConnection('online','Live AI (Claude) ready');return true;}
+    }catch(e){}
+    liveConnected=false;
+    setConnection('online','Offline tutor · live AI not connected');
     return false;
   }
 
@@ -10310,8 +10370,8 @@ I can explain where a value came from, audit the website's solution, solve step 
     bubble('user',text);
     saveHistory();
 
-    // No network connection is used: always answer with the local tutor.
-    { bubble('assistant',localTutor(text)); saveHistory(); return; }
+    // Live Claude answers only on a deployed website (http/https). On file:// previews use the offline tutor.
+    if(!(location.protocol==='http:'||location.protocol==='https:')){ bubble('assistant',localTutor(text)); saveHistory(); return; }
 
     send.disabled=true;
     stop.classList.add('show');
@@ -10329,8 +10389,8 @@ I can explain where a value came from, audit the website's solution, solve step 
         body:JSON.stringify({
           message:text,
           context:pageContext(),
-          allowWeb:useWeb.checked,
-          previousResponseId:previousResponseId
+          allowWeb:false,
+          history:chatHistory(text)
         })
       });
       if(!r.ok){
@@ -10381,9 +10441,10 @@ I can explain where a value came from, audit the website's solution, solve step 
         setConnection('online','Live AI online · response stopped');
       }else{
         out.remove();
-        bubble('error',`Live AI error: ${e.message}\n\nThe website and server are working. Your OpenAI API account needs available API credit before live AI replies can be generated.`);
+        bubble('error',`Live AI error: ${e.message}\n\nThe website and server are working. Your Anthropic API account needs available credit (Console > Billing) and the ANTHROPIC_API_KEY variable must be set in Vercel. The offline tutor answer is shown below instead.`);
         liveConnected=false;
-        setConnection('offline','Live AI needs API credit');
+        bubble('assistant',localTutor(text));
+        setConnection('offline','Live AI unavailable - using offline tutor');
       }
     }finally{
       aborter=null;send.disabled=false;stop.classList.remove('show');input.focus();saveHistory();
@@ -10465,8 +10526,9 @@ I can explain where a value came from, audit the website's solution, solve step 
   const savedEndpoint=localStorage.getItem(ENDPOINT_KEY);
   const isStaticPreview=(location.protocol==='file:'||location.protocol==='blob:');
   if(isStaticPreview) endpoint.value=LIVE_RENDER_BACKEND;
-  else if(savedEndpoint) endpoint.value=savedEndpoint;
-  restoreHistory();
+  else endpoint.value='/api/chat-stream';
+  // Start a fresh conversation every time the page is opened or refreshed (no old chat is restored).
+  try{localStorage.removeItem(HISTORY_KEY);}catch(e){}
   healthCheck();
 })();
 </script>
