@@ -10185,7 +10185,7 @@ I can explain where a value came from, audit the website's solution, solve step 
   <div id="ai-advanced" class="ai-advanced">
     <label for="ai-backend-url">AI backend URL</label>
     <input id="ai-backend-url" value="/api/chat-stream" placeholder="https://timber-structure-calculation.onrender.com/api/chat-stream">
-    <small>For a deployed site using the included server, leave this as <b>/api/chat-stream</b>. The Anthropic API key stays on the server and is never placed in this webpage.</small>
+    <small>For a deployed site using the included server, leave this as <b>/api/chat-stream</b>. The OpenAI API key stays on the server and is never placed in this webpage.</small>
   </div>
 
   <div class="ai-composer">
@@ -10253,14 +10253,6 @@ I can explain where a value came from, audit the website's solution, solve step 
     localStorage.removeItem(HISTORY_KEY);
     scroll.innerHTML='';
     bubble('assistant','New chat started. Ask a BET402 question, paste a numerical problem, or ask me to explain the current website solution.');
-  }
-
-  function chatHistory(current){
-    const rows=[...scroll.querySelectorAll('.ai-bubble.user,.ai-bubble.assistant')]
-      .map(el=>({role:el.classList.contains('user')?'user':'assistant',text:(el.childNodes[0]?.textContent||'').trim()}))
-      .filter(r=>r.text);
-    if(rows.length&&rows[rows.length-1].role==='user'&&rows[rows.length-1].text===current)rows.pop();
-    return rows.slice(-8).map(r=>({role:r.role,text:r.text.slice(0,2000)}));
   }
 
   function pageContext(){
@@ -10338,16 +10330,7 @@ I can explain where a value came from, audit the website's solution, solve step 
   }
 
   async function healthCheck(){
-    if(!(location.protocol==='http:'||location.protocol==='https:')){
-      setConnection('online','Offline tutor · runs on this device · no network connection');
-      return false;
-    }
-    try{
-      const r=await fetch('/api/chat-stream',{method:'GET',cache:'no-store'});
-      if(r.status===405||r.ok){liveConnected=true;setConnection('online','Live AI (Claude) ready');return true;}
-    }catch(e){}
-    liveConnected=false;
-    setConnection('online','Offline tutor · live AI not connected');
+    setConnection('online','Offline tutor · runs on this device · no network connection');
     return false;
   }
 
@@ -10370,8 +10353,8 @@ I can explain where a value came from, audit the website's solution, solve step 
     bubble('user',text);
     saveHistory();
 
-    // Live Claude answers only on a deployed website (http/https). On file:// previews use the offline tutor.
-    if(!(location.protocol==='http:'||location.protocol==='https:')){ bubble('assistant',localTutor(text)); saveHistory(); return; }
+    // No network connection is used: always answer with the local tutor.
+    { bubble('assistant',localTutor(text)); saveHistory(); return; }
 
     send.disabled=true;
     stop.classList.add('show');
@@ -10389,8 +10372,8 @@ I can explain where a value came from, audit the website's solution, solve step 
         body:JSON.stringify({
           message:text,
           context:pageContext(),
-          allowWeb:false,
-          history:chatHistory(text)
+          allowWeb:useWeb.checked,
+          previousResponseId:previousResponseId
         })
       });
       if(!r.ok){
@@ -10441,10 +10424,9 @@ I can explain where a value came from, audit the website's solution, solve step 
         setConnection('online','Live AI online · response stopped');
       }else{
         out.remove();
-        bubble('error',`Live AI error: ${e.message}\n\nThe website and server are working. Your Anthropic API account needs available credit (Console > Billing) and the ANTHROPIC_API_KEY variable must be set in Vercel. The offline tutor answer is shown below instead.`);
+        bubble('error',`Live AI error: ${e.message}\n\nThe website and server are working. Your OpenAI API account needs available API credit before live AI replies can be generated.`);
         liveConnected=false;
-        bubble('assistant',localTutor(text));
-        setConnection('offline','Live AI unavailable - using offline tutor');
+        setConnection('offline','Live AI needs API credit');
       }
     }finally{
       aborter=null;send.disabled=false;stop.classList.remove('show');input.focus();saveHistory();
@@ -10526,9 +10508,8 @@ I can explain where a value came from, audit the website's solution, solve step 
   const savedEndpoint=localStorage.getItem(ENDPOINT_KEY);
   const isStaticPreview=(location.protocol==='file:'||location.protocol==='blob:');
   if(isStaticPreview) endpoint.value=LIVE_RENDER_BACKEND;
-  else endpoint.value='/api/chat-stream';
-  // Start a fresh conversation every time the page is opened or refreshed (no old chat is restored).
-  try{localStorage.removeItem(HISTORY_KEY);}catch(e){}
+  else if(savedEndpoint) endpoint.value=savedEndpoint;
+  restoreHistory();
   healthCheck();
 })();
 </script>
